@@ -27,6 +27,17 @@ class RSATestCase(unittest.TestCase):
         self.assertEqual(32, rsa.gcd(7966496, 314080416))
         self.assertEqual(526, rsa.gcd(24826148, 45296490))
 
+    def test_egcd(self):
+        self.assertEqual((0, 0, 1), rsa.egcd(0, 0))
+        self.assertEqual((1, -2, 1), rsa.egcd(3, 7))
+        self.assertEqual((3, -1, 1), rsa.egcd(12, 15))
+        self.assertEqual((9, 0, 1), rsa.egcd(0, 9))
+        self.assertEqual((12, 1, 0), rsa.egcd(12, 0))
+        self.assertEqual((14, -1, 1), rsa.egcd(42, 56))
+        self.assertEqual((18, -682, 2709), rsa.egcd(461952, 116298))
+        self.assertEqual((32, -3646946, 92503), rsa.egcd(7966496, 314080416))
+        self.assertEqual((526, 27932, -15309), rsa.egcd(24826148, 45296490))
+
     def test_multiplicative_inverse(self):
         self.assertEqual(23, rsa.multiplicative_inverse(7, 40))
         self.assertEqual(1969, rsa.multiplicative_inverse(42, 2017))
