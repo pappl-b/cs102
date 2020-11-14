@@ -6,8 +6,6 @@ from ui import UI
 
 
 class GUI(UI):
-    """ Interface to play 'Game of Life' in the window """
-
     def __init__(
         self, life: GameOfLife, cell_size: int = 10, speed: int = 10, path_saving: str = "grid"
     ) -> None:

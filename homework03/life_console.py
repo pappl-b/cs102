@@ -8,8 +8,6 @@ from ui import UI
 
 
 class Console(UI):
-    """ Interface to play 'Game of Life' in the console """
-
     def __init__(self, life: GameOfLife, speed: int = 1, path_saving: str = "grid") -> None:
         super().__init__(life)
         # Скорость протекания игры
