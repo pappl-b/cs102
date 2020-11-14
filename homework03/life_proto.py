@@ -1,8 +1,9 @@
+""" Prototype of 'Game of Life' with basic functions and GIU. """
+
 import random
 import typing as tp
 
 import pygame
-from pygame.locals import *
 
 Cell = tp.Tuple[int, int]
 Cells = tp.List[int]
@@ -10,6 +11,8 @@ Grid = tp.List[Cells]
 
 
 class GameOfLife:
+    """ Realisation of the game   """
+
     def __init__(
         self, width: int = 640, height: int = 480, cell_size: int = 10, speed: int = 10
     ) -> None:

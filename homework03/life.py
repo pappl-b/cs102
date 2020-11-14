@@ -1,9 +1,9 @@
+"""
+Logic for 'Game of Life'
+"""
 import pathlib
 import random
 import typing as tp
-
-import pygame
-from pygame.locals import *
 
 Cell = tp.Tuple[int, int]
 Cells = tp.List[int]
@@ -11,6 +11,8 @@ Grid = tp.List[Cells]
 
 
 class GameOfLife:
+    """ Game proccess realisation """
+
     def __init__(
         self,
         size: tp.Tuple[int, int],
@@ -48,8 +50,7 @@ class GameOfLife:
         """
         if randomize:
             return [
-                [(random.randint(0, 1)) for col in range(self.cols)]
-                for row in range(self.rows)
+                [(random.randint(0, 1)) for col in range(self.cols)] for row in range(self.rows)
             ]
         return [[0] * self.cols for i in range(self.rows)]
 
@@ -115,7 +116,7 @@ class GameOfLife:
         """
         Выполнить один шаг игры.
         """
-        if not (self.is_max_generations_exceeded):
+        if not self.is_max_generations_exceeded:
             self.prev_generation = self.curr_generation.copy()
             self.curr_generation = self.get_next_generation()
             self.generations += 1
@@ -127,9 +128,7 @@ class GameOfLife:
         """
         if self.max_generations is None:
             return False
-        else:
-            return self.generations >= self.max_generations
-
+        return self.generations >= self.max_generations
 
     @property
     def is_changing(self) -> bool:
@@ -147,14 +146,14 @@ class GameOfLife:
         importing_grid: Grid
         importing_grid = []
         importing_height = 0
-        
+
         for line in file_from:
             importing_grid.append([])
-            for elem in line.strip('\n'):
+            for elem in line.strip("\n"):
                 importing_grid[importing_height].append(int(elem))
             importing_height += 1
-        
-        importing_game = GameOfLife((importing_height,len(importing_grid[0])))
+
+        importing_game = GameOfLife((importing_height, len(importing_grid[0])))
         importing_game.curr_generation = importing_grid
         return importing_game
 
@@ -162,9 +161,9 @@ class GameOfLife:
         """
         Сохранить текущее состояние клеток в указанный файл.
         """
-        file_to = open(filename,'w')
+        file_to = open(filename, "w")
         for row in self.curr_generation:
             for col in row:
                 file_to.write(str(col))
-            file_to.write('\n')
+            file_to.write("\n")
         file_to.close()
