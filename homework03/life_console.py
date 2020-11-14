@@ -25,20 +25,19 @@ class Console(UI):
         for row in range(self.life.rows):
             for col in range(self.life.cols):
                 if self.life.curr_generation[row][col]:
-                    screen.addstr(row+1, col*2+1, "  ", curses.A_REVERSE)
+                    screen.addstr(row + 1, col * 2 + 1, "  ", curses.A_REVERSE)
                 else:
-                    screen.addstr(row+1, col*2+1, "  ")
+                    screen.addstr(row + 1, col * 2 + 1, "  ")
 
     def run(self) -> None:
         screen = curses.initscr()
-        screen = curses.newwin(self.life.rows + 2, self.life.cols*2 + 2)
+        screen = curses.newwin(self.life.rows + 2, self.life.cols * 2 + 2)
         screen.keypad(True)
         curses.noecho()
         curses.curs_set(0)
         screen.border(0)
         screen.nodelay(True)
-        
-        
+
         self.draw_borders(screen)
 
         running = True
@@ -46,11 +45,11 @@ class Console(UI):
 
         while running:
             key = screen.getch()
-            if key == ord(' '):
-                paused = bool((int(paused)+1)%2)
-            elif key == curses.KEY_RIGHT:   
+            if key == ord(" "):
+                paused = bool((int(paused) + 1) % 2)
+            elif key == curses.KEY_RIGHT:
                 self.life.save(self.path_saving)
-            elif key == curses.KEY_LEFT:   
+            elif key == curses.KEY_LEFT:
                 self.life.curr_generation = self.life.create_grid(True)
             if not paused:
                 self.draw_grid(screen)
