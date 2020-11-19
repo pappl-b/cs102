@@ -94,19 +94,20 @@ class GameOfLife:
             Новое поколение клеток.
         """
         new_grid = self.create_grid(randomize=False)
+        neighbours_alive_count = [[0 for _ in range(self.cols)] for _ in range(self.cols)]
         for row in range(self.rows):
             for col in range(self.cols):
-                new_grid[row][col] = sum(self.get_neighbours((row, col)))
+                neighbours_alive_count[row][col] = sum(self.get_neighbours((row, col)))
 
         for row in range(self.rows):
             for col in range(self.cols):
-                if self.curr_generation[row][col]:
-                    if 1 < new_grid[row][col] < 4:
+                if self.curr_generation[row][col] == 1:
+                    if 1 < neighbours_alive_count[row][col] < 4:
                         new_grid[row][col] = 1
                     else:
                         new_grid[row][col] = 0
                 else:
-                    if new_grid[row][col] == 3:
+                    if neighbours_alive_count[row][col] == 3:
                         new_grid[row][col] = 1
                     else:
                         new_grid[row][col] = 0
@@ -117,7 +118,7 @@ class GameOfLife:
         Выполнить один шаг игры.
         """
         if not self.is_max_generations_exceeded:
-            self.prev_generation = self.curr_generation.copy()
+            self.prev_generation = self.curr_generation
             self.curr_generation = self.get_next_generation()
             self.generations += 1
 
@@ -152,6 +153,7 @@ class GameOfLife:
             for elem in line.strip("\n"):
                 importing_grid[importing_height].append(int(elem))
             importing_height += 1
+        file_from.close()
 
         importing_game = GameOfLife((importing_height, len(importing_grid[0])))
         importing_game.curr_generation = importing_grid

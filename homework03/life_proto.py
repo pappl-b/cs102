@@ -100,7 +100,7 @@ class GameOfLife:
 
         for row in range(self.cell_height):
             for col in range(self.cell_width):
-                if self.grid[row][col]:
+                if self.grid[row][col] == 1:
                     pygame.draw.rect(
                         self.screen,
                         pygame.Color("green"),
@@ -163,19 +163,22 @@ class GameOfLife:
             Новое поколение клеток.
         """
         new_grid = self.create_grid(randomize=False)
+        neighbours_alive_count = [
+            [0 for _ in range(self.cell_width)] for _ in range(self.cell_height)
+        ]
         for row in range(self.cell_height):
             for col in range(self.cell_width):
-                new_grid[row][col] = sum(self.get_neighbours((row, col)))
+                neighbours_alive_count[row][col] = sum(self.get_neighbours((row, col)))
 
         for row in range(self.cell_height):
             for col in range(self.cell_width):
-                if self.grid[row][col]:
-                    if 1 < new_grid[row][col] < 4:
+                if self.grid[row][col] == 1:
+                    if 1 < neighbours_alive_count[row][col] < 4:
                         new_grid[row][col] = 1
                     else:
                         new_grid[row][col] = 0
                 else:
-                    if new_grid[row][col] == 3:
+                    if neighbours_alive_count[row][col] == 3:
                         new_grid[row][col] = 1
                     else:
                         new_grid[row][col] = 0
