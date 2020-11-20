@@ -27,7 +27,7 @@ class Console(UI):
         for row in range(self.life.rows):
             for col in range(self.life.cols):
                 if self.life.curr_generation[row][col] == 1:
-                    screen.addstr(row + 1, col * 2 + 1, "  ", curses.A_REVERSE)
+                    screen.addstr(row + 1, col * 2 + 1, "##", curses.A_REVERSE)
                 else:
                     screen.addstr(row + 1, col * 2 + 1, "  ")
 
