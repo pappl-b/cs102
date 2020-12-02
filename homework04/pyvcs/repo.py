@@ -19,7 +19,7 @@ def repo_find(workdir: tp.Union[str, pathlib.Path] = ".") -> pathlib.Path:
             is_first = False
         else:
             found_repo += "/"
-    
+
     raise Exception("Not a git repository")
 
 
