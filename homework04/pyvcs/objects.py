@@ -24,8 +24,32 @@ def hash_object(data: bytes, fmt: str, write: bool = False) -> str:
 
 
 def resolve_object(obj_name: str, gitdir: pathlib.Path) -> tp.List[str]:
-    # PUT YOUR CODE HERE
-    ...
+    if not (3 < len(obj_name) < 41):
+        raise Exception("Not a valid object name " + obj_name)
+
+    contents = []
+
+    dir_name = obj_name[:2]
+    file_starts_with = obj_name[2:]
+
+    files_in_dir = os.listdir(pathlib.Path(gitdir / "objects" / dir_name))
+
+    for fl in files_in_dir:
+        if fl.startswith(file_starts_with):
+            obj_path = pathlib.Path(gitdir / "objects" / obj_name[:2] / fl)
+            contents.append(obj_name[:2] + fl)
+            # obj_content_bytes = obj_path.read_bytes()
+            # raise Exception(obj_content_bytes)
+            # obj_data = zlib.decompress(obj_content_bytes)
+            # header_separator = obj_data.find(b"\x00")
+            # len_separator = obj_data[:header_separator].find(b" ")
+
+            # content_len = int(obj_data[len_separator:header_separator].decode("ascii"))
+            # contents.append(str(obj_data[header_separator+1:]))
+    if len(contents) == 0:
+        raise Exception("Not a valid object name " + obj_name)
+
+    return contents
 
 
 def find_object(obj_name: str, gitdir: pathlib.Path) -> str:
