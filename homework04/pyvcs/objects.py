@@ -38,14 +38,6 @@ def resolve_object(obj_name: str, gitdir: pathlib.Path) -> tp.List[str]:
         if fl.startswith(file_starts_with):
             obj_path = pathlib.Path(gitdir / "objects" / obj_name[:2] / fl)
             contents.append(obj_name[:2] + fl)
-            # obj_content_bytes = obj_path.read_bytes()
-            # raise Exception(obj_content_bytes)
-            # obj_data = zlib.decompress(obj_content_bytes)
-            # header_separator = obj_data.find(b"\x00")
-            # len_separator = obj_data[:header_separator].find(b" ")
-
-            # content_len = int(obj_data[len_separator:header_separator].decode("ascii"))
-            # contents.append(str(obj_data[header_separator+1:]))
     if len(contents) == 0:
         raise Exception("Not a valid object name " + obj_name)
 
@@ -58,8 +50,22 @@ def find_object(obj_name: str, gitdir: pathlib.Path) -> str:
 
 
 def read_object(sha: str, gitdir: pathlib.Path) -> tp.Tuple[str, bytes]:
-    # PUT YOUR CODE HERE
-    ...
+    obj_bytes = pathlib.Path(gitdir / "objects" / sha[:2] / sha[2:]).read_bytes()
+    obj_data = zlib.decompress(obj_bytes)
+
+    header_separator = obj_data.find(b"\x00")
+    len_separator = obj_data[:header_separator].find(b" ")
+
+    content_len = int(obj_data[len_separator:header_separator].decode("ascii"))
+
+    content = obj_data[header_separator + 1 :]
+
+    if len(content) != content_len:
+        raise Exception("The file is corrupted")
+
+    fmt = obj_data[:len_separator].decode("ascii")
+
+    return (fmt, content)
 
 
 def read_tree(data: bytes) -> tp.List[tp.Tuple[int, str, str]]:
@@ -68,8 +74,9 @@ def read_tree(data: bytes) -> tp.List[tp.Tuple[int, str, str]]:
 
 
 def cat_file(obj_name: str, pretty: bool = True) -> None:
-    # PUT YOUR CODE HERE
-    ...
+    gitdir = repo_find(pathlib.Path.cwd())
+    fmt, content = read_object(obj_name, pathlib.Path(gitdir))
+    print(content.decode("ascii"))
 
 
 def find_tree_files(tree_sha: str, gitdir: pathlib.Path) -> tp.List[tp.Tuple[str, str]]:
