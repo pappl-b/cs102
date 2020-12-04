@@ -41,7 +41,7 @@ class GitIndexEntry(tp.NamedTuple):
             self.flags,
         )
         name_bytes = self.name.encode()
-        return head + name_bytes + b"\x00" * (len(name_bytes) % 4)
+        return head + name_bytes + b"\x00" * (8 - (62+len(name_bytes)) % 8)
 
     @staticmethod
     def unpack(data: bytes) -> "GitIndexEntry":
@@ -97,19 +97,18 @@ def read_index(gitdir: pathlib.Path) -> tp.List[GitIndexEntry]:
 
 def write_index(gitdir: pathlib.Path, entries: tp.List[GitIndexEntry]) -> None:
     gie_count = len(entries)
-    result_index = "DICT\x00\x00\x00\x02".encode() + struct.pack("L", gie_count)
+    result_index = "DIRC\x00\x00\x00\x02".encode() + struct.pack("!L", gie_count)
     for gie in entries:
         result_index += gie.pack()
-
     f = open(str(gitdir / "index"), 'wb')
-    f.write(result_index)
+    f.write(result_index + hashlib.sha1(result_index).digest())
     f.close()
 
 def ls_files(gitdir: pathlib.Path, details: bool = False) -> None:
     list_gie = read_index(gitdir)
     if details:
         for gie in list_gie:
-            print (str(oct(gie.mode))[2:], " ", hash_object(gie.sha1, "bloob"), " ", 0, " ", gie.name)
+            print (str(oct(gie.mode))[2:], " ", hash_object(gie.sha1, "blob"), " ", 0, " ", gie.name)
     else:
         for gie in list_gie:
             print(gie.name)
