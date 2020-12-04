@@ -62,7 +62,7 @@ class GitIndexEntry(tp.NamedTuple):
             size=head[9],
             sha1=head[10],
             flags=head[11],
-            name=name_bytes.decode(),
+            name=name_bytes.decode()
         )
 
 
@@ -96,13 +96,23 @@ def read_index(gitdir: pathlib.Path) -> tp.List[GitIndexEntry]:
 
 
 def write_index(gitdir: pathlib.Path, entries: tp.List[GitIndexEntry]) -> None:
-    # PUT YOUR CODE HERE
-    ...
+    gie_count = len(entries)
+    result_index = "DICT\x00\x00\x00\x02".encode() + struct.pack("L", gie_count)
+    for gie in entries:
+        result_index += gie.pack()
 
+    f = open(str(gitdir / "index"), 'wb')
+    f.write(result_index)
+    f.close()
 
 def ls_files(gitdir: pathlib.Path, details: bool = False) -> None:
-    # PUT YOUR CODE HERE
-    ...
+    list_gie = read_index(gitdir)
+    if details:
+        for gie in list_gie:
+            print (str(oct(gie.mode))[2:], " ", hash_object(gie.sha1, "bloob"), " ", 0, " ", gie.name)
+    else:
+        for gie in list_gie:
+            print(gie.name)
 
 
 def update_index(gitdir: pathlib.Path, paths: tp.List[pathlib.Path], write: bool = True) -> None:
