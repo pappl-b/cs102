@@ -25,13 +25,45 @@ class GitIndexEntry(tp.NamedTuple):
     name: str
 
     def pack(self) -> bytes:
-        # PUT YOUR CODE HERE
-        ...
+        head = struct.pack(
+            "!10L20sH",
+            self.ctime_s,
+            self.ctime_n,
+            self.mtime_s,
+            self.mtime_n,
+            self.dev,
+            self.ino,
+            self.mode,
+            self.uid,
+            self.gid,
+            self.size,
+            self.sha1,
+            self.flags,
+        )
+        name_bytes = self.name.encode()
+        return head + name_bytes + b"\x00" * (len(name_bytes) % 4)
 
     @staticmethod
     def unpack(data: bytes) -> "GitIndexEntry":
-        # PUT YOUR CODE HERE
-        ...
+        head = struct.unpack("!10L20sH", data[:62])
+        name_bytes = data[62:]
+        name_bytes = name_bytes[: name_bytes.find(b"\x00")]
+
+        return GitIndexEntry(
+            ctime_s=head[0],
+            ctime_n=head[1],
+            mtime_s=head[2],
+            mtime_n=head[3],
+            dev=head[4],
+            ino=head[5],
+            mode=head[6],
+            uid=head[7],
+            gid=head[8],
+            size=head[9],
+            sha1=head[10],
+            flags=head[11],
+            name=name_bytes.decode(),
+        )
 
 
 def read_index(gitdir: pathlib.Path) -> tp.List[GitIndexEntry]:
