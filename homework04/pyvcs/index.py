@@ -126,21 +126,26 @@ def update_index(gitdir: pathlib.Path, paths: tp.List[pathlib.Path], write: bool
             names.append(elem.name)
     for route in paths:
         stats = os.stat(route)
+        ctimes = str(stats.st_ctime).split(".")
+        mtimes = str(stats.st_mtime).split(".")
         gie_to_append = GitIndexEntry(
-            ctime_s=int(stats.st_ctime),
-            ctime_n=stats.st_ctime_ns,
-            mtime_s=int(stats.st_mtime),
-            mtime_n=stats.st_mtime_ns,
+            ctime_s=int(ctimes[0]),
+            ctime_n=int(ctimes[1]),
+            mtime_s=int(mtimes[0]),
+            mtime_n=int(mtimes[1]),
             dev=stats.st_dev,
-            ino=stats.st_ino,
+            ino=stats.st_ino & 0xFFFFFFFF,
             mode=stats.st_mode,
             uid=stats.st_uid,
             gid=stats.st_gid,
             size=stats.st_size,
-            sha1=hash_object(route.read_bytes(), "blob").encode(),
+            sha1=hash_object(route.read_bytes(), "blob", True).encode(),
             flags=0,
             name=str(route),
         )
-        if names.count(str(route)) != 0:
-            ...
+        if names.count(str(route)):
+            gie_list_new[names.index(str(route))] = gie_to_append
+        else:
+            gie_list_new.append(gie_to_append)
+    gie_list_new.sort(key=lambda GitIndexEntry: GitIndexEntry.name)
     write_index(gitdir, gie_list_new)
