@@ -43,5 +43,18 @@ def commit_tree(
     parent: tp.Optional[str] = None,
     author: tp.Optional[str] = None,
 ) -> str:
-    # PUT YOUR CODE HERE
-    ...
+
+    commiter = os.environ["GIT_AUTHOR_NAME"] + " <" + os.environ["GIT_AUTHOR_EMAIL"] + ">"
+    if author is None:
+        author = commiter
+
+    string_to_commit = "tree " + tree + "\n"
+    string_to_commit += (
+        "author " + author + " " + str(int(time.mktime(time.localtime()))) + " +0300\n"
+    )
+    string_to_commit += (
+        "committer " + author + " " + str(int(time.mktime(time.localtime()))) + " +0300\n\n"
+    )
+    string_to_commit += message + "\n"
+
+    return hash_object(string_to_commit.encode(), "commit", write=True)

@@ -20,7 +20,7 @@ def hash_object(data: bytes, fmt: str, write: bool = False) -> str:
             pathlib.Path.mkdir(current_dir)
         file_obj = pathlib.Path(current_dir / hashed[2:])
         file_obj.write_bytes(zlib.compress(store))
-    return hashlib.sha1(store).hexdigest()
+    return hashed
 
 
 def resolve_object(obj_name: str, gitdir: pathlib.Path) -> tp.List[str]:
@@ -36,7 +36,7 @@ def resolve_object(obj_name: str, gitdir: pathlib.Path) -> tp.List[str]:
 
     for fl in files_in_dir:
         if fl.startswith(file_starts_with):
-            obj_path = pathlib.Path(gitdir / "objects" / obj_name[:2] / fl)
+            # obj_path = pathlib.Path(gitdir / "objects" / obj_name[:2] / fl)
             contents.append(obj_name[:2] + fl)
     if len(contents) == 0:
         raise Exception("Not a valid object name " + obj_name)
@@ -69,14 +69,56 @@ def read_object(sha: str, gitdir: pathlib.Path) -> tp.Tuple[str, bytes]:
 
 
 def read_tree(data: bytes) -> tp.List[tp.Tuple[int, str, str]]:
-    # PUT YOUR CODE HERE
-    ...
+    gitdir = repo_find(pathlib.Path.cwd())
+    bytes_in_tree = pathlib.Path(
+        gitdir / "objects" / data[:2].decode("ascii") / data[2:].decode("ascii")
+    ).read_bytes()
+    data_in_tree = zlib.decompress(bytes_in_tree)
+
+    content_list: tp.List[tp.Tuple[int, str, str]] = []
+
+    header_separator = data_in_tree.find(b"\x00")
+    len_separator = data_in_tree[:header_separator].find(b" ")
+    content_len = int(data_in_tree[len_separator:header_separator])
+
+    content = data_in_tree[header_separator + 1 :]
+
+    while content_len > 10:
+        separator = content.find(b" ")
+        content_len -= separator
+        row_mode = content[:separator].decode()
+
+        content = content[separator + 1 :]
+
+        separator = content.find("\0".encode())
+        row_name = content[:separator]
+        row_sha = content[separator + 1 : separator + 21]
+        content = content[separator + 21 :]
+        content_len -= separator + 20
+        content_list.append((int(row_mode), row_sha.hex(), row_name.decode()))
+
+    return content_list
 
 
 def cat_file(obj_name: str, pretty: bool = True) -> None:
     gitdir = repo_find(pathlib.Path.cwd())
     fmt, content = read_object(obj_name, pathlib.Path(gitdir))
-    print(content.decode("ascii"))
+    if fmt != "tree":
+        gitdir = repo_find(pathlib.Path.cwd())
+        fmt, content = read_object(obj_name, pathlib.Path(gitdir))
+        to_print = content.decode("ascii")
+        print(to_print)
+    else:
+        tree_content = read_tree(obj_name.encode())
+        for part in tree_content:
+            row = ""
+            if part[0] == 40000:
+                row += "040000 "
+            else:
+                row += str(part[0]) + " "
+            fmt, content = read_object(part[1], pathlib.Path(gitdir))
+            row += fmt + " " + part[1] + "\t" + part[2]
+            print(row)
 
 
 def find_tree_files(tree_sha: str, gitdir: pathlib.Path) -> tp.List[tp.Tuple[str, str]]:
