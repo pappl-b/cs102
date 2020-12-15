@@ -49,6 +49,8 @@ def commit_tree(
         author = commiter
 
     string_to_commit = "tree " + tree + "\n"
+    if parent is not None:
+        string_to_commit += "parent " + parent + "\n"
     string_to_commit += (
         "author " + author + " " + str(int(time.mktime(time.localtime()))) + " +0300\n"
     )
