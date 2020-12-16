@@ -31,6 +31,8 @@ def repo_create(workdir: tp.Union[str, pathlib.Path]) -> pathlib.Path:
     if os.getenv("GIT_DIR") is None:
         os.environ["GIT_DIR"] = ".git"
     if os.getenv("GIT_AUTHOR_NAME") is None:
+        if os.getenv("USERNAME") is None:
+            os.environ["USERNAME"] = "spasisohrani"
         os.environ["GIT_AUTHOR_NAME"] = os.environ["USERNAME"]
         os.environ["GIT_AUTHOR_EMAIL"] = "not@stated"
 
