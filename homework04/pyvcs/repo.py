@@ -30,6 +30,9 @@ def repo_create(workdir: tp.Union[str, pathlib.Path]) -> pathlib.Path:
         raise Exception(f"{workdir} is not a directory")
     if os.getenv("GIT_DIR") is None:
         os.environ["GIT_DIR"] = ".git"
+    if os.getenv("GIT_AUTHOR_NAME") is None:
+        os.environ["GIT_AUTHOR_NAME"] = os.environ["USERNAME"]
+        os.environ["GIT_AUTHOR_EMAIL"] = "not@stated"
 
     pathlib.Path.mkdir(pathlib.Path(workdir) / os.environ["GIT_DIR"])
 

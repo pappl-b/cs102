@@ -48,7 +48,6 @@ class GitIndexEntry(tp.NamedTuple):
         head = struct.unpack("!LLLLLLLLLL20sH", data[:62])
         name_bytes = data[62:]
         name_bytes = name_bytes[: name_bytes.find(b"\x00")]
-
         return GitIndexEntry(
             ctime_s=head[0],
             ctime_n=head[1],
@@ -62,7 +61,7 @@ class GitIndexEntry(tp.NamedTuple):
             size=head[9],
             sha1=head[10],
             flags=head[11],
-            name=name_bytes.decode(),
+            name=name_bytes.decode("ascii"),
         )
 
 
@@ -72,8 +71,8 @@ def read_index(gitdir: pathlib.Path) -> tp.List[GitIndexEntry]:
     index_file = open(pathlib.Path(gitdir / "index"), "rb")
     content = index_file.read()
 
-    signature = content[:4].decode()
-    version = content[4:8].decode()
+    signature = content[:4].decode("ascii")
+    version = content[4:8].decode("ascii")
     files_count = struct.unpack("!L", content[8:12])[0]
 
     returning: tp.List[GitIndexEntry] = []
@@ -108,9 +107,7 @@ def ls_files(gitdir: pathlib.Path, details: bool = False) -> None:
     list_gie = read_index(gitdir)
     if details:
         for gie in list_gie:
-            print(
-                " ".join([str(oct(gie.mode))[2:], str((gie.sha1).hex()), str(0)]) + "\t" + gie.name
-            )
+            print(" ".join([str(f"{gie.mode:o}"), gie.sha1.hex(), str(0)]) + "\t" + gie.name)
     else:
         for gie in list_gie:
             print(gie.name)
@@ -121,13 +118,15 @@ def update_index(gitdir: pathlib.Path, paths: tp.List[pathlib.Path], write: bool
     gie_list_new: tp.List[GitIndexEntry] = []
     names = []
     if os.path.exists(index_path):
-        gie_new = read_index(gitdir)
+        gie_list_new = read_index(gitdir)
         for elem in gie_list_new:
             names.append(elem.name)
     for route in paths:
         stats = os.stat(route)
+
         ctimes = str(stats.st_ctime).split(".")
         mtimes = str(stats.st_mtime).split(".")
+
         gie_to_append = GitIndexEntry(
             ctime_s=int(ctimes[0]),
             ctime_n=int(ctimes[1]),
@@ -139,7 +138,7 @@ def update_index(gitdir: pathlib.Path, paths: tp.List[pathlib.Path], write: bool
             uid=stats.st_uid,
             gid=stats.st_gid,
             size=stats.st_size,
-            sha1=hash_object(route.read_bytes(), "blob", True).encode(),
+            sha1=bytes.fromhex(hash_object(route.read_bytes(), "blob", True)),
             flags=0,
             name=str(route),
         )

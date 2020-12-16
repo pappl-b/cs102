@@ -126,6 +126,10 @@ def find_tree_files(tree_sha: str, gitdir: pathlib.Path) -> tp.List[tp.Tuple[str
     ...
 
 
-def commit_parse(raw: bytes, start: int = 0, dct=None):
-    # PUT YOUR CODE HERE
-    ...
+def commit_parse(raw: bytes, start: int = 0, dct=None) -> str:
+    content = raw.decode()
+    separator = content.find("tree ")
+    content = content[separator + 5 :]
+    separator = content.find("\n")
+    tree = content[:separator]
+    return tree
