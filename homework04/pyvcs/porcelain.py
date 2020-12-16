@@ -11,7 +11,7 @@ from pyvcs.tree import commit_tree, write_tree
 def add(gitdir: pathlib.Path, paths: tp.List[pathlib.Path]) -> None:
     for path in paths:
         if path.is_dir():
-            add(gitdir, tp.List[path.glob("*")])
+            add(gitdir, list(path.glob("*")))
         else:
             update_index(gitdir, [path])
 
