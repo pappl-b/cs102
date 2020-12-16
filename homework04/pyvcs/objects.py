@@ -15,7 +15,7 @@ def hash_object(data: bytes, fmt: str, write: bool = False) -> str:
     store = header.encode() + data
     hashed = hashlib.sha1(store).hexdigest()
     if write:
-        current_dir = repo_find(pathlib.Path.cwd()) / "objects" / pathlib.Path(hashed[:2])
+        current_dir = repo_find() / "objects" / pathlib.Path(hashed[:2])
         if not pathlib.Path.exists(current_dir):
             pathlib.Path.mkdir(current_dir)
         file_obj = pathlib.Path(current_dir / hashed[2:])

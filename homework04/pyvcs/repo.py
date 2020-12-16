@@ -4,21 +4,18 @@ import typing as tp
 
 
 def repo_find(workdir: tp.Union[str, pathlib.Path] = ".") -> pathlib.Path:
-    workdir = pathlib.Path(workdir)
-    if workdir == (pathlib.Path(".")).absolute():
-        return pathlib.Path(workdir / os.environ["GIT_DIR"])
-    found_repo = ""
-    is_first = True
-    for elem in workdir.parts:
-        found_repo += elem
+    found_repo = pathlib.Path(workdir).absolute()
+    root = pathlib.Path(found_repo.parts[0])
 
-        if elem == os.environ["GIT_DIR"]:
-            return pathlib.Path(found_repo)
+    if os.getenv("GIT_DIR") is None:
+        os.environ["GIT_DIR"] = ".git"
 
-        if is_first:
-            is_first = False
-        else:
-            found_repo += "/"
+    while True:
+        if os.listdir(found_repo).count(os.environ["GIT_DIR"]) == 1:
+            return pathlib.Path(found_repo / os.environ["GIT_DIR"]).absolute()
+        found_repo = found_repo.parent
+        if found_repo == root:
+            break
 
     raise Exception("Not a git repository")
 
