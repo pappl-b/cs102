@@ -64,9 +64,7 @@ class ReadIndexTestCase(TestCase):
         entries = read_index(gitdir)
         self.assertEqual(3, len(entries))
         # TODO: Add sha
-        self.assertEqual(
-            ["bar.txt", "baz/numbers.txt", "foo.txt"], [e.name for e in entries]
-        )
+        self.assertEqual(["bar.txt", "baz/numbers.txt", "foo.txt"], [e.name for e in entries])
 
     def test_read_index_when_index_doesnt_exist(self):
         gitdir = repo_create(".")
@@ -93,6 +91,7 @@ class LsFilesTestCase(TestCase):
         gitdir = repo_create(".")
         raw_index = b"DIRC\x00\x00\x00\x02\x00\x00\x00\x03^\xf9\t\x9c\x0b\xf0\xcf\x05^\xf9\t\x9c\x0b\xf0\xcf\x05\x01\x00\x00\x04\x00\x83b\xcb\x00\x00\x81\xa4\x00\x00\x01\xf5\x00\x00\x00\x14\x00\x00\x00\x04W\x16\xcaY\x87\xcb\xf9}k\xb5I \xbe\xa6\xad\xde$-\x87\xe6\x00\x07bar.txt\x00\x00\x00^\xf9\t\xca\x1f\xf0l^^\xf9\t\xca\x1f\xf0l^\x01\x00\x00\x04\x00\x83b\xf6\x00\x00\x81\xa4\x00\x00\x01\xf5\x00\x00\x00\x14\x00\x00\x00\x07\x9f5\x8aJ\xdd\xef\xca\xb2\x94\xb8>B\x82\xbf\xef\x1f\x96%\xa2I\x00\x0fbaz/numbers.txt\x00\x00\x00^\xf9\t\xa18\xd3\xad\xbb^\xf9\t\xa18\xd3\xad\xbb\x01\x00\x00\x04\x00\x83b\xd3\x00\x00\x81\xa4\x00\x00\x01\xf5\x00\x00\x00\x14\x00\x00\x00\x04%|\xc5d,\xb1\xa0T\xf0\x8c\xc8?-\x94>V\xfd>\xbe\x99\x00\x07foo.txt\x00\x00\x00k\xd6q\xa7d\x10\x8e\x80\x93F]\x0c}+\x82\xfb\xc7:\xa8\x11"
         self.fs.create_file(gitdir / "index", contents=raw_index)
+        self.maxDiff = None
         expected_output = "\n".join(
             [
                 "100644 5716ca5987cbf97d6bb54920bea6adde242d87e6 0	bar.txt",
@@ -222,6 +221,4 @@ class UpdateIndexTestCase(TestCase):
         self.assertEqual(3, len(entries))
 
         names = [e.name for e in entries]
-        self.assertEqual(
-            ["alphabeta/letters.txt", "numbers/digits.txt", "quote.txt"], names
-        )
+        self.assertEqual(["alphabeta/letters.txt", "numbers/digits.txt", "quote.txt"], names)

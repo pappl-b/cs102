@@ -9,7 +9,7 @@ from pyfakefs.fake_filesystem_unittest import TestCase
 import pyvcs
 from pyvcs.index import read_index, update_index
 from pyvcs.repo import repo_create
-from pyvcs.tree import commit_tree, write_tree
+from pyvcs.tree import commit_tree, gie_from_list_in_dir, write_tree
 
 
 @unittest.skipIf(pyvcs.__version_info__ < (0, 5, 0), "Нужна версия пакета 0.5.0 и выше")
@@ -30,6 +30,14 @@ class WriteTreeTestCase(TestCase):
         entries = read_index(gitdir)
         sha = write_tree(gitdir, entries)
         self.assertEqual("dc6b8ea09fb7573a335c5fb953b49b85bb6ca985", sha)
+
+    def test_gie_from_list_in_dir(self):
+        gitdir = repo_create(".")
+        raw_index = b"DIRC\x00\x00\x00\x02\x00\x00\x00\x03^\xf9\t\x9c\x0b\xf0\xcf\x05^\xf9\t\x9c\x0b\xf0\xcf\x05\x01\x00\x00\x04\x00\x83b\xcb\x00\x00\x81\xa4\x00\x00\x01\xf5\x00\x00\x00\x14\x00\x00\x00\x04W\x16\xcaY\x87\xcb\xf9}k\xb5I \xbe\xa6\xad\xde$-\x87\xe6\x00\x07bar.txt\x00\x00\x00^\xf9\t\xca\x1f\xf0l^^\xf9\t\xca\x1f\xf0l^\x01\x00\x00\x04\x00\x83b\xf6\x00\x00\x81\xa4\x00\x00\x01\xf5\x00\x00\x00\x14\x00\x00\x00\x07\x9f5\x8aJ\xdd\xef\xca\xb2\x94\xb8>B\x82\xbf\xef\x1f\x96%\xa2I\x00\x0fbaz/numbers.txt\x00\x00\x00^\xf9\t\xa18\xd3\xad\xbb^\xf9\t\xa18\xd3\xad\xbb\x01\x00\x00\x04\x00\x83b\xd3\x00\x00\x81\xa4\x00\x00\x01\xf5\x00\x00\x00\x14\x00\x00\x00\x04%|\xc5d,\xb1\xa0T\xf0\x8c\xc8?-\x94>V\xfd>\xbe\x99\x00\x07foo.txt\x00\x00\x00k\xd6q\xa7d\x10\x8e\x80\x93F]\x0c}+\x82\xfb\xc7:\xa8\x11"
+        self.fs.create_file(gitdir / "index", contents=raw_index)
+        entries = read_index(gitdir)
+        result_gie = gie_from_list_in_dir(entries, "baz")
+        self.assertEqual([entries[1]], result_gie)
 
     def test_write_tree_subdirs(self):
         gitdir = repo_create(".")
