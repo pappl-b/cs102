@@ -5,6 +5,7 @@ from dateutil.relativedelta import relativedelta
 
 from vkapi.friends import get_friends
 
+
 def age_predict(user_id: int) -> tp.Optional[float]:
     """
     Наивный прогноз возраста пользователя по возрасту его друзей.

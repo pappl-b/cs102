@@ -23,5 +23,6 @@ def example():
     vis = pyLDAvis.gensim.prepare(ldamodel, corpus, dictionary)
     pyLDAvis.show(vis)
 
+
 if __name__ == "__main__":
     example()
