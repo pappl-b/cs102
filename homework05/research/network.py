@@ -19,9 +19,11 @@ def ego_network(
     :param friends: Идентификаторы друзей, между которыми устанавливаются связи.
     """
     if friends is None:
-        friends: tp.List[int] = get_friends(user_id).items
+        friends: tp.List[int] = get_friends(user_id).items  # type:ignore
     result = list()
-    list_of_mutuals: tp.List[MutualFriends] = get_mutual(user_id, target_uids=friends)
+    list_of_mutuals: tp.List[MutualFriends] = get_mutual(
+        user_id, target_uids=friends
+    )  # type:ignore
     for mutuals in list_of_mutuals:
         for mutual in mutuals["common_friends"]:
             result.append((mutuals["id"], mutual))

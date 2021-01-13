@@ -15,15 +15,23 @@ def age_predict(user_id: int) -> tp.Optional[float]:
     :param user_id: Идентификатор пользователя.
     :return: Медианный возраст пользователя.
     """
-    age_list = []
-    friends_list = get_friends(user_id, fields=["bdate"]).items
-    for friend in friends_list:
+    friends: tp.List[tp.Dict[str, tp.Any]] = get_friends(
+        user_id, fields=["bdate"]
+    ).items  # type:ignore
+    today = dt.date.today()
+    ages = []
+    user: tp.Dict[str, tp.Any]
+    for user in friends:
         try:
-            bdate = dt.datetime.strptime(friend["bdate"], "%d.%m.%Y")
-            age_list.append(relativedelta(dt.datetime.now(), bdate).years)
-        except (KeyError, ValueError):
+            date = dt.date(
+                int(user["bdate"].split(".")[2]),
+                int(user["bdate"].split(".")[1]),
+                int(user["bdate"].split(".")[0]),
+            )
+        except (KeyError, IndexError):
             continue
-    if len(age_list) == 0:
-        return None
+        ages.append(relativedelta(today, date).years)
+    if ages:
+        return statistics.median(ages)
     else:
-        return statistics.median(age_list)
+        return None
