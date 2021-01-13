@@ -4,15 +4,11 @@ import requests
 from requests.adapters import HTTPAdapter
 from requests.packages.urllib3.util.retry import Retry
 
-DEFAULT_TIMEOUT = 5
-
 
 class TimeoutHTTPAdapter(HTTPAdapter):
     def __init__(self, *args, **kwargs):
-        self.timeout = DEFAULT_TIMEOUT
-        if "timeout" in kwargs:
-            self.timeout = kwargs["timeout"]
-            del kwargs["timeout"]
+        self.timeout = kwargs["timeout"]
+        del kwargs["timeout"]
         super().__init__(*args, **kwargs)
 
     def send(self, request, **kwargs):
@@ -47,15 +43,14 @@ class Session(requests.Session):
             status_forcelist=[429, 500, 502, 503, 504],
             backoff_factor=backoff_factor,
         )
-        adapter = HTTPAdapter(max_retries=self.retry_strategy)
-        self.mount(base_url, adapter)
+        adapter = TimeoutHTTPAdapter(max_retries=self.retry_strategy, timeout=timeout)
+        self.mount("https://", adapter)
+        self.mount("http://", adapter)
 
     def get(self, url: str, *args: tp.Any, **kwargs: tp.Any) -> requests.Response:
         route = f"{self.base_url}/{url}"
-        kwargs["timeout"] = kwargs.get("timeout", self.timeout)
         return super().get(route, *args, **kwargs)
 
     def post(self, url: str, *args: tp.Any, **kwargs: tp.Any) -> requests.Response:
         route = f"{self.base_url}/{url}"
-        kwargs["timeout"] = kwargs.get("timeout", self.timeout)
         return super().post(route, *args, **kwargs)

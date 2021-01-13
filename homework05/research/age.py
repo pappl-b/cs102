@@ -17,8 +17,8 @@ def age_predict(user_id: int) -> tp.Optional[float]:
     :return: Медианный возраст пользователя.
     """
     age_list = []
-    friends_list = get_friends(user_id, fields=["bdate"])
-    for friend in friends_list.items:
+    friends_list = get_friends(user_id, fields=["bdate"]).items
+    for friend in friends_list:
         try:
             bdate = dt.datetime.strptime(friend["bdate"], "%d.%m.%Y")
             age_list.append(relativedelta(dt.datetime.now(), bdate).years)
