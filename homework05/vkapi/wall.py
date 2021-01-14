@@ -20,7 +20,37 @@ def get_posts_2500(
     extended: int = 0,
     fields: tp.Optional[tp.List[str]] = None,
 ) -> tp.Dict[str, tp.Any]:
-    pass
+    code = f"""
+            var result = [];
+            var i=0;
+            var count=0;
+            while (i < {max_count}){{
+                if (i+{offset}+100>{count}){{
+                var wall = API.wall.get({{"owner_id":"{owner_id}", "domain": "{domain}", "count":{count}-(i+{offset}), "fields":"{','.join(fields) if fields is not None else ''}", "extended": {extended}, "filter":"{filter}","offset": i+{offset}}});
+                    result.push(wall.items);
+                    count = wall.count;
+                    i = {max_count};
+                }}
+                else{{
+                    var wall = API.wall.get({{"owner_id":"{owner_id}", "domain": "{domain}", "count":100, "fields":"{','.join(fields) if fields is not None else ''}", "extended": {extended}, "filter":"{filter}", "offset": i+{offset}}});
+                    result.push(wall.items);
+                    count = wall.count;
+                }}
+                i = i+100;
+            }}
+            return {{"count": count, "items": result}};"""
+    response = session.post(
+        "execute",
+        timeout=30,
+        data={
+            "access_token": config.VK_CONFIG["access_token"],
+            "v": "5.126",
+            "code": code,
+        },
+    )
+    if "error" in response.json():
+        raise APIError(response.json()["error"]["error_msg"])
+    return response.json()
 
 
 def get_wall_execute(
@@ -49,4 +79,31 @@ def get_wall_execute(
     :param fields: Список дополнительных полей для профилей и сообществ, которые необходимо вернуть.
     :param progress: Callback для отображения прогресса.
     """
-    pass
+    response = session.post(
+        "execute",
+        data={
+            "access_token": config.VK_CONFIG["access_token"],
+            "v": "5.126",
+            "code": f'return {{"count": API.wall.get({{"owner_id": "{owner_id}", "filter":"{filter}", "domain": "{domain}", "count": "1"}}).count}};',
+        },
+    )
+    if "error" in response.json():
+        raise APIError(response.json()["error"]["error_msg"])
+    if count != 0:
+        count = min(count, response.json()["response"]["count"])
+    else:
+        count = response.json()["response"]["count"]
+    if progress is None:
+        progress = lambda x, *a, **kw: x
+    json_data = []
+    for j, i in progress(enumerate(range(offset, count, max_count))):
+        response_json = get_posts_2500(
+            owner_id, domain, offset + i, count, max_count, filter, extended, fields
+        )
+        res = []
+        if isinstance(response_json, dict):
+            for x in response_json["response"]["items"]:
+                res.append(x)
+            json_data.extend(res)
+        time.sleep(1)
+    return json_normalize(json_data)

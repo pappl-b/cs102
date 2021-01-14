@@ -16,7 +16,10 @@ class FriendsResponse:
 
 
 def get_friends(
-    user_id: int, count: int = 5000, offset: int = 0, fields: tp.Optional[tp.List[str]] = None
+    user_id: tp.Optional[int] = None,
+    count: int = 5000,
+    offset: int = 0,
+    fields: tp.Optional[tp.List[str]] = None,
 ) -> FriendsResponse:
     """
     Получить список идентификаторов друзей пользователя или расширенную информацию
@@ -28,7 +31,19 @@ def get_friends(
     :param fields: Список полей, которые нужно получить для каждого пользователя.
     :return: Список идентификаторов друзей пользователя или список пользователей.
     """
-    pass
+    params = {
+        "access_token": config.VK_CONFIG["access_token"],
+        "v": config.VK_CONFIG["version"],
+        "user_id": user_id if user_id is not None else "",
+        "count": count,
+        "offset": offset,
+        "fields": ",".join(fields) if fields is not None else "",
+    }
+    response = session.get(f"friends.get", params=params)
+    response_json = response.json()
+    if "error" in response_json:
+        raise APIError(response_json["error"]["error_msg"])
+    return FriendsResponse(**response_json["response"])
 
 
 class MutualFriends(tp.TypedDict):
@@ -57,4 +72,40 @@ def get_mutual(
     :param offset: Смещение, необходимое для выборки определенного подмножества общих друзей.
     :param progress: Callback для отображения прогресса.
     """
-    pass
+    if progress is None:
+        progress = lambda x, *a, **kw: x
+    if target_uids is None:
+        target_uids = [target_uid]  # type: ignore
+    mutual_friends_list = []
+    for i, j in progress(enumerate(range(0, len(target_uids), 100))):
+        params = {
+            "access_token": config.VK_CONFIG["access_token"],
+            "v": config.VK_CONFIG["version"],
+            "source_uid": source_uid if source_uid is not None else "",
+            "target_uid": target_uid if target_uid is not None else "",
+            "target_uids": ",".join(map(str, target_uids)),
+            "count": count if count is not None else "",
+            "offset": j + offset,
+            "order": order,
+        }
+        response = session.get(f"friends.getMutual", params=params)
+        curr_resp_json = response.json()
+        if "error" in curr_resp_json:
+            raise APIError(curr_resp_json["error"]["error_msg"])
+        if target_uid:
+            return curr_resp_json["response"]
+        else:
+            mutual_friends_list.extend(curr_resp_json["response"])
+        if i % 3 == 2:
+            time.sleep(1)
+    result = []
+    for friend_list in mutual_friends_list:
+        if "common_friends" in friend_list:
+            result.append(
+                MutualFriends(
+                    id=friend_list["id"],
+                    common_friends=friend_list["common_friends"],
+                    common_count=friend_list["common_count"],
+                )
+            )
+    return result
