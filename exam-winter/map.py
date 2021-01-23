@@ -34,13 +34,13 @@ class labyrinth:
                 result += "\n"
         return result
 
-    def possible_to_go(self, x: int, y: int, visited: tp.List[tp.List[bool]]):
-        if (
-            0 <= x < self.cols
-            and 0 <= y < self.rows
-            and self.map[x][y] != BOUND
-            and visited[x][y] != True
-        ):
+    def isSafe(self, visited, x, y):
+        if self.map[x][y] == BOUND or visited[x][y] == True:
+            return False
+        return True
+
+    def isValid(self, x, y):
+        if x < self.rows and y < self.cols and x >= 0 and y >= 0:
             return True
         return False
 
@@ -51,7 +51,7 @@ class labyrinth:
             for j in range(self.cols):
                 visited[i].append(False)
 
-        print(
+        self.print_solved(
             self.step(visited, self.start[1], self.start[0], cur_path=[], min_path=[], min_dist=-1)
         )
 
@@ -65,7 +65,7 @@ class labyrinth:
         min_dist: int,
     ):
         if (i, j) == self.finale:
-            if len(cur_path) < min_dist or min_dist == -1:
+            if len(cur_path) <= min_dist or min_dist == -1:
                 min_path.clear()
                 min_path.extend(cur_path)
                 min_path.append((j, i))
@@ -77,10 +77,8 @@ class labyrinth:
 
         possible_paths = [(i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)]
         for path in possible_paths:
-            if self.possible_to_go(path[0], path[1], visited):
+            if self.isValid(path[0], path[1]) and self.isSafe(visited, path[0], path[1]):
                 self.step(visited, path[0], path[1], cur_path, min_path, min_dist)
-
-        self.print_solved(min_path)
         visited[i][j] = False
         cur_path.pop()
 
