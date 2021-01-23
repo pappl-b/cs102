@@ -47,13 +47,12 @@ class labyrinth:
         visited = []
         for i in range(self.rows):
             visited.append([])
-            for j in range(self.cols):
+            for _ in range(self.cols):
                 visited[i].append(False)
 
         self.min_path = []
         self.min_dist = -1
         self.step(visited, self.start[1], self.start[0], cur_path=[])
-
         self.print_solved()
 
     def step(self, visited: tp.List[tp.List[bool]], i: int, j: int, cur_path):
@@ -65,7 +64,7 @@ class labyrinth:
             return
 
         visited[i][j] = True
-        cur_path.append((j, i))
+        cur_path.append((i, j))
         possible_paths = [(i + 1, j), (i - 1, j), (i, j + 1), (i, j - 1)]
         for path in possible_paths:
             if self.isValid(path[0], path[1]) and self.isSafe(visited, path[0], path[1]):
