@@ -1,4 +1,4 @@
-""" Collecting a data (latest news) from 'Hacker News' as a list of dictionaries """
+"""Collecting a data (latest news) from 'Hacker News' as a list of dictionaries"""
 
 import typing as tp
 
@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 
 
 def extract_news(parser: BeautifulSoup) -> tp.List[tp.Dict[str, tp.Union[str, int]]]:
-    """ Extract news from a given web page """
+    """Extract news from a given web page"""
 
     news_list = []
     rows = parser.table.find("table", {"class": "itemlist"}).findAll("tr")
@@ -47,12 +47,12 @@ def extract_news(parser: BeautifulSoup) -> tp.List[tp.Dict[str, tp.Union[str, in
 
 
 def extract_next_page(parser: BeautifulSoup) -> str:
-    """ Extract next page URL """
+    """Extract next page URL"""
     return str(parser.find("a", {"class": "morelink"})["href"])
 
 
 def get_news(url: str, n_pages: int = 1) -> tp.List[tp.Dict[str, tp.Union[int, str]]]:
-    """ Collect news from a given web page """
+    """Collect news from a given web page"""
     news = []
     while n_pages:
         print("Collecting data from page: {}".format(url))
