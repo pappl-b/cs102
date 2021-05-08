@@ -5,8 +5,6 @@ import typing as tp
 import requests
 from bs4 import BeautifulSoup
 
-URL = "https://news.ycombinator.com/"
-
 
 def extract_news(parser: BeautifulSoup) -> tp.List[tp.Dict[str, tp.Union[str, int]]]:
     """ Extract news from a given web page """
