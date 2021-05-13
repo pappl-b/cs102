@@ -15,7 +15,6 @@ def news_list():
 
 @route("/add_label/")
 def add_label():
-    s = session()
     n_id = request.query["id"]
     n_label = request.query["label"]
     set_label(session(), n_id, n_label)
@@ -24,7 +23,7 @@ def add_label():
 
 @route("/update")
 def update_news():
-    add_data(session(), get_news(url="https://news.ycombinator.com/", n_pages=12))
+    add_data(session(), get_news(url="https://news.ycombinator.com/newest", n_pages=4))
     redirect("/news")
 
 
