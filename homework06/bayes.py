@@ -22,7 +22,7 @@ class NaiveBayesClassifier:
 
     def __init__(self, alpha_smoothing: float = 1):
         self.alpha_smoothing = alpha_smoothing
-        self.word_probabilities: tp.Dict[str, [tp.Dict[str, float]]] = {} #type: ignore
+        self.word_probabilities: tp.Dict[str, [tp.Dict[str, float]]] = {}  # type: ignore
         self.class_probability: tp.Dict[str, float]
         self.default_class_value: tp.Dict[str, float] = {}
 
