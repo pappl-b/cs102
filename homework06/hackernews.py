@@ -5,7 +5,15 @@ from bayes import NaiveBayesClassifier
 from db import News, add_data, session, set_label
 from scraputils import get_news
 
+Base = declarative_base()
+SQLALCHEMY_DATABASE_URL = "sqlite:///news.db"
+engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+SessionLocal = sessionmaker(autocommit=False, autoflush=False)
 
+def get_session(engine: Engine) -> Session:
+    SessionLocal.configure(bind=engine)
+    return SessionLocal()
+    
 @route("/")
 @route("/news")
 def news_list():
