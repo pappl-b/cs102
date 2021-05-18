@@ -1,20 +1,22 @@
-from bottle import route, run, template, request, redirect 
+"""Bottle based hosting for classifier"""
+from bottle import redirect, request, route, run, template
 
-from scraputils import get_news
-from db import News, session, add_data, set_label
 from bayes import NaiveBayesClassifier
+from db import News, add_data, session, set_label
+from scraputils import get_news
 
 
 @route("/")
 @route("/news")
 def news_list():
-    s = session()
-    rows = s.query(News).filter(News.label == None).all()
+    """Show all news without labels"""
+    rows = session().query(News).filter(News.label == None).all()
     return template("news_template", rows=rows)
 
 
 @route("/add_label/")
 def add_label():
+    """Mark news"""
     n_id = request.query["id"]
     n_label = request.query["label"]
     set_label(session(), n_id, n_label)
@@ -23,14 +25,30 @@ def add_label():
 
 @route("/update")
 def update_news():
+    """Expand database"""
     add_data(session(), get_news(url="https://news.ycombinator.com/newest", n_pages=4))
     redirect("/news")
 
 
+colors = {"good": "#bdedbb", "never": "#ffd3bb", "maybe": "#e9eae6"}
+
+
 @route("/classify")
 def classify_news():
-    # PUT YOUR CODE HERE
-    pass
+    """Show classified news list"""
+    s = session()
+    classifier = NaiveBayesClassifier()
+    marked_data = s.query(News).filter(News.label is not None).all()
+    classifier.fit([row.title for row in marked_data], [row.label for row in marked_data])
+    news = s.query(News).filter(News.label is None).all()
+    data = []
+    for row in news:
+        data.append(row.title)
+    for i, row in enumerate(classifier.predict(data)):
+        data[i] = colors[row]
+    colored_data = sorted(zip(data, news), key=lambda tup: tup[0])
+    print(colored_data)
+    return template("color_template", rows=colored_data)
 
 
 if __name__ == "__main__":
