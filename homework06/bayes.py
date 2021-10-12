@@ -20,7 +20,7 @@ def clean(string_to_clean: str) -> str:
 class NaiveBayesClassifier:
     """Classify text data by word frequency in given classes"""
 
-    def __init__(self, alpha_smoothing: float = 1):
+    def __init__(self, alpha_smoothing: float = 1e-5):
         self.alpha_smoothing = alpha_smoothing
         self.word_probabilities: tp.Dict[str, [tp.Dict[str, float]]] = {}  # type: ignore
         self.class_probability: tp.Dict[str, float]
