@@ -3,3 +3,4 @@ requests
 sqlalchemy
 bs4
 types-requests
+pytest
