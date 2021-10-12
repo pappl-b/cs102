@@ -18,14 +18,14 @@ def get_session(engine: Engine) -> Session:
 
 @route("/")
 @route("/news")
-def news_list():
+def news_list() -> str:
     """Show all news without labels"""
     rows = session().query(News).filter(News.label == None).all()
     return template("news_template", rows=rows)
 
 
 @route("/add_label/")
-def add_label():
+def add_label() -> None:
     """Mark news"""
     n_id = request.query["id"]
     n_label = request.query["label"]
@@ -34,7 +34,7 @@ def add_label():
 
 
 @route("/update")
-def update_news():
+def update_news() -> None:
     """Expand database"""
     add_data(session(), get_news(url="https://news.ycombinator.com/newest", n_pages=4))
     redirect("/news")
@@ -44,7 +44,7 @@ colors = {"good": "#bdedbb", "never": "#ffd3bb", "maybe": "#e9eae6"}
 
 
 @route("/classify")
-def classify_news():
+def classify_news() -> str:
     """Show classified news list"""
     s = session()
     classifier = NaiveBayesClassifier()

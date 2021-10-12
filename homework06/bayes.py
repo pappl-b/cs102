@@ -26,7 +26,7 @@ class NaiveBayesClassifier:
         self.class_probability: tp.Dict[str, float]
         self.default_class_value: tp.Dict[str, float] = {}
 
-    def fit(self, marked_data: tp.List[str], marks: tp.List[str]):
+    def fit(self, marked_data: tp.List[str], marks: tp.List[str]) -> None:
         """Study on marked data, count words and classes probabilities. Based on Bayes Theorem"""
         for mark in set(marks):
             self.word_probabilities[mark] = defaultdict(int)
