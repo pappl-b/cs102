@@ -6,6 +6,7 @@ from collections import Counter, defaultdict
 from math import log
 from statistics import mean
 
+
 def clean(string_to_clean: str) -> str:
     """Cleans string from punctuation, lower all letters
     >> clean("I LoVe Python!!1")
@@ -18,7 +19,7 @@ def clean(string_to_clean: str) -> str:
 
 
 class NaiveBayesClassifier:
-    """Classify textdata by word frequency in given classes"""
+    """Classify text data by word frequency in given classes"""
 
     def __init__(self, alpha_smoothing: float = 1e-5):
         self.alpha_smoothing = alpha_smoothing
@@ -27,7 +28,7 @@ class NaiveBayesClassifier:
         self.default_class_value: tp.Dict[str, float] = {}
 
     def fit(self, marked_data: tp.List[str], marks: tp.List[str]) -> None:
-        """Study on marked data, count words and classes probabilities. Based on Bayes Theorem"""
+        """Study on marked data, count words and classes probabilities. Based on Bayes Theorem."""
         for mark in set(marks):
             self.word_probabilities[mark] = defaultdict(int)
         n_words_in_class: tp.Dict[str, int] = dict.fromkeys(set(marks), 0)
@@ -113,7 +114,6 @@ if __name__ == "__main__":
 
     test = NaiveBayesClassifier()
     test.fit(test_data, test_answ)
-
     test_to_predict = [
         "The beer was good",
         "I do not enjoy my job",
