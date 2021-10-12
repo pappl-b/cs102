@@ -17,6 +17,7 @@ def news_list() -> str:
     rows = s.query(News).filter(News.label == None).all()
     return template("news_template", rows=rows)
 
+
 @tp.no_type_check
 @route("/add_label/")
 def add_label() -> None:
@@ -26,6 +27,7 @@ def add_label() -> None:
     n_label = request.query["label"]
     set_label(s, n_id, n_label)
     redirect("/news")
+
 
 @tp.no_type_check
 @route("/update")
