@@ -14,17 +14,13 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pytest black mypy pylint
-        pip install -r homework06/requirements.txt
+        pip install pytest black mypy pylint httptools types-jwt
     - name: Run black
       run: |
-        black -l 100 --check --diff --color --exclude "test*" ${{ github.head_ref }}
+        black -l 100 --check --diff --color --exclude "test*" homework09-web
     - name: Run mypy
       run: |
-        mypy --ignore-missing-imports ${{ github.head_ref }} --strict --exclude "tests"
+        mypy --ignore-missing homework09-web
     - name: Run pylint
       run: |
-        pylint --exit-zero ${{ github.head_ref }}
-    - name: Run PyTest
-      run: |
-        pytest ${{ github.head_ref }}
+        pylint --exit-zero homework09-web
