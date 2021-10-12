@@ -18,7 +18,7 @@ def clean(string_to_clean: str) -> str:
 
 
 class NaiveBayesClassifier:
-    """Classify text data by word frequency in given classes"""
+    """Classify textdata by word frequency in given classes"""
 
     def __init__(self, alpha_smoothing: float = 1e-5):
         self.alpha_smoothing = alpha_smoothing
