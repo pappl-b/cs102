@@ -4,6 +4,14 @@ import socket
 import typing as tp
 
 from httptools import HttpRequestParser
+from httptools.parser.errors import (
+    HttpParserError,
+    HttpParserCallbackError,
+    HttpParserInvalidStatusError,
+    HttpParserInvalidMethodError,
+    HttpParserInvalidURLError,
+    HttpParserUpgrade,
+)
 
 from .request import HTTPRequest
 from .response import HTTPResponse
@@ -58,7 +66,7 @@ class BaseHTTPRequestHandler(BaseRequestHandler):
             try:
                 response = self.handle_request(request)
             except Exception:
-                # TODO: log exception
+                print("error 500!")
                 response = self.response_klass(status=500, headers={}, body=b"")
         else:
             response = self.response_klass(status=400, headers={}, body=b"")
@@ -66,22 +74,49 @@ class BaseHTTPRequestHandler(BaseRequestHandler):
         self.close()
 
     def parse_request(self) -> tp.Optional[HTTPRequest]:
-        pass
+        while not self._parsed:
+            try:
+                data = self.socket.recv(1024)
+                if data == b"":
+                    print("parsed!")
+                    break
+                self.parser.feed_data(data)
+            except socket.timeout:
+                print("timeout!")
+                break
+            except (
+                HttpParserError,
+                HttpParserCallbackError,
+                HttpParserInvalidStatusError,
+                HttpParserInvalidMethodError,
+                HttpParserInvalidURLError,
+                HttpParserUpgrade,
+            ):
+                print("parser error!")
+                break
+        if self._parsed:
+            return self.request_klass(
+                method=self.parser.get_method(),
+                url=self._url,
+                headers=self._headers,
+                body=self._body,
+            )
+        return None
 
     def handle_request(self, request: HTTPRequest) -> HTTPResponse:
-        pass
+        return self.response_klass(status=405, headers={}, body=b"")
 
     def handle_response(self, response: HTTPResponse) -> None:
-        pass
+        self.socket.sendall(response.to_http1())
 
     def on_url(self, url: bytes) -> None:
-        pass
+        self._url = url
 
     def on_header(self, name: bytes, value: bytes) -> None:
-        pass
+        self._headers[name] = value
 
     def on_body(self, body: bytes) -> None:
-        pass
+        self._body = body
 
     def on_message_complete(self) -> None:
-        pass
+        self._parsed = True

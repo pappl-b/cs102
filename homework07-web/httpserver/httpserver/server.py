@@ -2,6 +2,8 @@ import socket
 import threading
 import typing as tp
 
+import concurrent
+from concurrent.threads import ThreadPoolExecutor
 from .handlers import BaseRequestHandler
 
 
@@ -12,13 +14,12 @@ class TCPServer:
         port: int = 5000,
         backlog_size: int = 1,
         max_workers: int = 1,
-        timeout: tp.Optional[float] = None,
+        timeout: tp.Optional[float] = 3,
         request_handler_cls: tp.Type[BaseRequestHandler] = BaseRequestHandler,
     ) -> None:
         self.host = host
         self.port = port
         self.server_address = (host, port)
-        # @see: https://stackoverflow.com/questions/36594400/what-is-backlog-in-tcp-connections
         self.backlog_size = backlog_size
         self.request_handler_cls = request_handler_cls
         self.max_workers = max_workers
@@ -26,13 +27,32 @@ class TCPServer:
         self._threads: tp.List[threading.Thread] = []
 
     def serve_forever(self) -> None:
-        # @see: http://veithen.io/2014/01/01/how-tcp-backlog-works-in-linux.html
-        # @see: https://en.wikipedia.org/wiki/Thundering_herd_problem
-        # @see: https://stackoverflow.com/questions/17630416/calling-accept-from-multiple-threads
-        pass
+        address = (self.host, self.port)
+        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, True)
+        server_socket.bind(address)
+        server_socket.listen(self.backlog_size)
+
+        print(f"Server {address}")
+
+        with ThreadPoolExecutor(max_workers=self.max_workers) as exec:
+            threads = []
+
+            try:
+                while True:
+                    client_socket, address = server_socket.accept()
+                    client_socket.settimeout(self.timeout)
+                    threads.append(exec.submit(self.handle_accept, client_socket))
+            except KeyboardInterrupt:
+                for thread in threads:
+                    thread.cancel()
+                concurrent.threads.wait(threads, timeout=self.timeout)
+                print("\nStop...")
+
+        server_socket.close()
 
     def handle_accept(self, server_socket: socket.socket) -> None:
-        pass
+        self.request_handler_cls(server_socket, self.server_address, self).handle()
 
 
 class HTTPServer(TCPServer):
