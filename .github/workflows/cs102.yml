@@ -17,10 +17,10 @@ jobs:
         pip install pytest black mypy pylint httptools types-jwt
     - name: Run black
       run: |
-        black -l 100 --check --diff --color --exclude "test*" homework09-web
+        black -l 100 --check --diff --color --exclude "test*" homework08-web
     - name: Run mypy
       run: |
-        mypy --ignore-missing homework09-web
+        mypy --ignore-missing homework08-web
     - name: Run pylint
       run: |
-        pylint --exit-zero homework09-web
+        pylint --exit-zero homework08-web
