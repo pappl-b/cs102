@@ -7,7 +7,7 @@ import hackernews
 
 def test_classification_single_words() -> None:
     x_train = [
-        hackernews.clean(s).lower() for s in "The quick brown fox jumps over the lazy dog".split()
+        bayes.clean(s).lower() for s in "The quick brown fox jumps over the lazy dog".split()
     ]
     y_train = ["NOT_ANIMAL"] * 3 + ["ANIMAL"] + ["NOT_ANIMAL"] * 4 + ["ANIMAL"]
 
@@ -25,7 +25,7 @@ def test_classification_massages_dataset() -> None:
         msgs.append(msg)
         targets.append(target)
 
-    msgs = [hackernews.clean(msg).lower() for msg in msgs]
+    msgs = [bayes.clean(msg).lower() for msg in msgs]
     msgs_train, targets_train, msgs_test, targets_test = (
         msgs[:3900],
         targets[:3900],
