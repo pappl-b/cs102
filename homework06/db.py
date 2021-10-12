@@ -1,4 +1,4 @@
-"""Create local database using sqlalchemy"""
+"""Create local database using sqlalchemy."""
 import typing as tp
 
 from sqlalchemy import Column, Integer, String, create_engine
