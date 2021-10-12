@@ -4,7 +4,7 @@ import string
 import typing as tp
 from collections import Counter, defaultdict
 from math import log
-
+from statistics import mean
 
 def clean(string_to_clean: str) -> str:
     """Cleans string from punctuation, lower all letters

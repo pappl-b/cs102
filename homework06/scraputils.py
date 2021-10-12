@@ -48,7 +48,7 @@ def extract_news(parser: BeautifulSoup) -> tp.List[tp.Dict[str, tp.Union[str, in
 
 def extract_next_page(parser: BeautifulSoup) -> str:
     """Extract next page URL"""
-    return str(parser.find("a", {"class": "morelink"})["href"])
+    return str(parser.select(".morelink")[0]["href"])
 
 
 def get_news(url: str, n_pages: int = 1) -> tp.List[tp.Dict[str, tp.Union[int, str]]]:

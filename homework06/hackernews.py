@@ -1,52 +1,49 @@
 """Bottle based hosting for classifier"""
+import typing as tp
+
 from bottle import redirect, request, route, run, template
 
 from bayes import NaiveBayesClassifier
-from db import News, add_data, session, set_label
+from db import News, add_data, engine, get_session, set_label
 from scraputils import get_news
 
-Base = declarative_base()
-SQLALCHEMY_DATABASE_URL = "sqlite:///news.db"
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
-SessionLocal = sessionmaker(autocommit=False, autoflush=False)
 
-
-def get_session(engine: Engine) -> Session:
-    SessionLocal.configure(bind=engine)
-    return SessionLocal()
-
-
+@tp.no_type_check
 @route("/")
 @route("/news")
 def news_list() -> str:
     """Show all news without labels"""
-    rows = session().query(News).filter(News.label == None).all()
+    s = get_session(engine)
+    rows = s.query(News).filter(News.label == None).all()
     return template("news_template", rows=rows)
 
-
+@tp.no_type_check
 @route("/add_label/")
 def add_label() -> None:
     """Mark news"""
+    s = get_session(engine)
     n_id = request.query["id"]
     n_label = request.query["label"]
-    set_label(session(), n_id, n_label)
+    set_label(s, n_id, n_label)
     redirect("/news")
 
-
+@tp.no_type_check
 @route("/update")
 def update_news() -> None:
     """Expand database"""
-    add_data(session(), get_news(url="https://news.ycombinator.com/newest", n_pages=4))
+    s = get_session(engine)
+    add_data(s, get_news(url="https://news.ycombinator.com/newest", n_pages=4))
     redirect("/news")
 
 
 colors = {"good": "#bdedbb", "never": "#ffd3bb", "maybe": "#e9eae6"}
 
 
+@tp.no_type_check
 @route("/classify")
 def classify_news() -> str:
     """Show classified news list"""
-    s = session()
+    s = get_session(engine)
     classifier = NaiveBayesClassifier()
     marked_data = s.query(News).filter(News.label is not None).all()
     classifier.fit([row.title for row in marked_data], [row.label for row in marked_data])

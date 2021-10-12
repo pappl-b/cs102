@@ -2,20 +2,17 @@
 import typing as tp
 
 from sqlalchemy import Column, Integer, String, create_engine
+from sqlalchemy.engine.base import Engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.session import Session
 
 from scraputils import get_news
 
-"""Base = declarative_base()
-engine = create_engine("sqlite:///news.db")
-session = sessionmaker(bind=engine)"""
-
 Base = declarative_base()
 path_news_db = "sqlite:///news.db"
 engine = create_engine(path_news_db, connect_args={"check_same_thread": False})
-local_session = sessionmaker(autocommit=False, autoflush=False)
+session = sessionmaker(autocommit=False, autoflush=False)
 
 
 class News(Base):  # type: ignore
@@ -33,8 +30,8 @@ class News(Base):  # type: ignore
 
 @tp.no_type_check
 def get_session(engine: Engine) -> Session:
-    local_session.configure(bind=engine)
-    return local_session()
+    session.configure(bind=engine)
+    return session()
 
 
 def add_data(_session: Session, data: tp.List[tp.Dict[str, tp.Union[int, str]]]) -> None:
