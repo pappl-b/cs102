@@ -4,7 +4,7 @@ import typing as tp
 
 
 @dataclasses.dataclass
-class HTTPResponse:
+class HTTPRequest:
     status: int
     headers: tp.Dict[str, str] = dataclasses.field(default_factory=dict)
     body: bytes = b""
