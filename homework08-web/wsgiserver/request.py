@@ -28,4 +28,3 @@ class WSGIRequest(HTTPRequest):
             # HTTP_Variables - переменные соответствующие заголовкам запроса переданным клиентом
         }
         return environ
-        

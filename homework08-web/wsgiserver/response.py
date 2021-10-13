@@ -13,4 +13,3 @@ class WSGIResponse(HTTPResponse):
     ) -> None:
         self.headers = {key: value for (key, value) in response_headers}
         self.status = int(status.split(" ")[0])
-
