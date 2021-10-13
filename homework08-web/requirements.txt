@@ -1,2 +1,2 @@
-httpserver
-httptools
+file:homework08-web/httpserver-0.0.1-py3-none-any.whl
+pyramid==2.0
