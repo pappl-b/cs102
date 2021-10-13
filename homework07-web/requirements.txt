@@ -1,1 +1,3 @@
 requests
+HTTPRequest
+types-requests
