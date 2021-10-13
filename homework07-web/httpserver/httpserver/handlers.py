@@ -74,34 +74,7 @@ class BaseHTTPRequestHandler(BaseRequestHandler):
         self.close()
 
     def parse_request(self) -> tp.Optional[HTTPRequest]:
-        while not self._parsed:
-            try:
-                data = self.socket.recv(1024)
-                if data == b"":
-                    print("parsed!")
-                    break
-                self.parser.feed_data(data)
-            except socket.timeout:
-                print("timeout!")
-                break
-            except (
-                HttpParserError,
-                HttpParserCallbackError,
-                HttpParserInvalidStatusError,
-                HttpParserInvalidMethodError,
-                HttpParserInvalidURLError,
-                HttpParserUpgrade,
-            ):
-                print("parser error!")
-                break
-        if self._parsed:
-            return self.request_klass(
-                method=self.parser.get_method(),
-                url=self._url,
-                headers=self._headers,
-                body=self._body,
-            )
-        return None
+        pass
 
     def handle_request(self, request: HTTPRequest) -> HTTPResponse:
         return self.response_klass(status=405, headers={}, body=b"")
