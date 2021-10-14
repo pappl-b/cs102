@@ -4,14 +4,6 @@ import socket
 import typing as tp
 
 from httptools import HttpRequestParser
-from httptools.parser.errors import (
-    HttpParserError,
-    HttpParserCallbackError,
-    HttpParserInvalidStatusError,
-    HttpParserInvalidMethodError,
-    HttpParserInvalidURLError,
-    HttpParserUpgrade,
-)
 
 from .request import HTTPRequest
 from .response import HTTPResponse
@@ -66,7 +58,7 @@ class BaseHTTPRequestHandler(BaseRequestHandler):
             try:
                 response = self.handle_request(request)
             except Exception:
-                print("error 500!")
+                # TODO: log exception
                 response = self.response_klass(status=500, headers={}, body=b"")
         else:
             response = self.response_klass(status=400, headers={}, body=b"")
@@ -77,19 +69,19 @@ class BaseHTTPRequestHandler(BaseRequestHandler):
         pass
 
     def handle_request(self, request: HTTPRequest) -> HTTPResponse:
-        return self.response_klass(status=405, headers={}, body=b"")
+        pass
 
     def handle_response(self, response: HTTPResponse) -> None:
-        self.socket.sendall(response.to_http1())
+        pass
 
     def on_url(self, url: bytes) -> None:
-        self._url = url
+        pass
 
     def on_header(self, name: bytes, value: bytes) -> None:
-        self._headers[name] = value
+        pass
 
     def on_body(self, body: bytes) -> None:
-        self._body = body
+        pass
 
     def on_message_complete(self) -> None:
-        self._parsed = True
+        pass
