@@ -1,95 +1,103 @@
 import datetime
 import mimetypes
-import os
 import pathlib
+import time
 import typing as tp
-from urllib.parse import urlparse
+from socketserver import BaseRequestHandler
+from urllib.parse import unquote, urlparse
 
 from httpserver import BaseHTTPRequestHandler, HTTPRequest, HTTPResponse, HTTPServer
 
 
-def url_normalize(path: str) -> str:
-    if path.startswith("."):
-        path = "/" + path
-    while "../" in path:
-        p1 = path.find("/..")
-        p2 = path.rfind("/", 0, p1)
-        if p2 != -1:
-            path = path[:p2] + path[p1 + 3 :]
+def path_resolver(path: str) -> str:
+    splitted = path.split("/")
+    curr: tp.List[str] = []
+    for i in splitted:
+        if i == "..":
+            try:
+                curr.pop()
+            except IndexError:
+                pass
+        elif i == ".":
+            continue
         else:
-            path = path.replace("/..", "", 1)
-    path = path.replace("/./", "/")
-    path = path.replace("/.", "")
-    return path
+            curr.append(i)
+    try:
+        if "." in curr[-2] and curr[-1] == "":
+            del curr[-1]
+    except IndexError:
+        pass
+    if curr:
+        curr[-1] = curr[-1].split("?", 1)[0]
+    return "/".join(curr)
 
 
-class StaticHTTPRequestHandler(BaseHTTPRequestHandler):  # type: ignore
-    @tp.no_type_check
-    def handle_request(self, request: HTTPRequest, **kwargs: tp.Dict[str, str]) -> HTTPResponse:
+def url_normalize(path: str) -> str:
+    normalized_path = path_resolver(path.replace("//", "/"))
+    if normalized_path[0] == "/":
+        normalized_path = normalized_path[1:]
+    return unquote(normalized_path) + (
+        "index.html" if len(normalized_path) == 0 or normalized_path[-1] == "/" else ""
+    )
+
+
+class StaticHTTPRequestHandler(BaseHTTPRequestHandler):  # type:ignore
+    def __init__(self, *args, **kwargs) -> None:  # type:ignore
+        super().__init__(*args, **kwargs)
+        self.document_root: pathlib.Path = self.server.document_root  # type: ignore
+        self._url: bytes = b""
+        self._headers: tp.Dict[bytes, bytes] = {}
+        self._body: bytes = b""
+        self._parsed = False
+
+    def handle_request(self, request: HTTPRequest) -> HTTPResponse:
         # NOTE: https://tools.ietf.org/html/rfc3986
         # NOTE: echo -n "GET / HTTP/1.0\r\n\r\n" | nc localhost 5000
-        content: bytes = b"No methods available"
-        status: int = 405
-        default_headers = {
-            "Date": str(datetime.datetime.now()),
-            "Server": "Static Server",
-            "Content-Length": str(len(content)),
-            "Content-Type": str,
+        headers = {
+            "Server": "too simple to live service",
+            "Date": datetime.datetime.now().strftime("%a, %d %b %Y %H:%m:%S"),
             "Allow": "GET, HEAD",
         }
-        content_type: tp.Optional[str] = None
-        content = b""
 
-        if request.method == b"GET" or request.method == b"HEAD":
-            status = 200
+        if request.method == b"PUSH" and request.body == b"":
+            return HTTPResponse(400, headers, b"")
+        if request.method not in (b"GET", b"HEAD"):
+            return HTTPResponse(405, headers, b"")
 
-            url = urlparse(url_normalize(request.url.decode()))
-            default_url_path = url.path
-            if url.path.endswith("/"):
-                default_url_path += "index.html"
-            path = pathlib.Path(str(server.document_root.absolute()) + default_url_path)
+        if request.method == b"HEAD":
+            headers["Content-Type"] = mimetypes.types_map.get(
+                "." + url_normalize(request.url.decode()).rsplit(".", 1)[1], ""
+            )
+            return HTTPResponse(200, headers, b"")
 
-            if request.method != b"HEAD":
-                if os.path.exists(path) and os.path.isfile(path):
-                    try:
-                        with open(path, "rb") as f:
-                            content = f.read()
-                        content_type, _other = mimetypes.guess_type(path)
-                    except OSError as os_exc:
-                        print(f"error 404.")
-                        status = 404
-                    except Exception as exc:
-                        print(f"error 500.")
-                        status = 500
-                else:
-                    status = 404
-                    print("File not found or is not a file. 404")
+        try:
+            file_path = self.document_root / url_normalize(request.url.decode())
+            with file_path.open("rb") as f:
+                data = f.read()
+                headers["Content-Length"] = str(len(data))
+                headers["Content-Type"] = mimetypes.types_map.get(
+                    "." + url_normalize(request.url.decode()).rsplit(".", 1)[1], ""
+                )
 
-            default_headers["Content-Length"] = str(len(content))
-            default_headers["Content-Type"] = "text/html" if not content_type else content_type
+                return HTTPResponse(200, headers, data)
 
-            return self.response_klass(status=status, headers=default_headers, body=content)
-        return self.response_klass(status=status, headers=default_headers, body=b"")
+        except FileNotFoundError:
+            return HTTPResponse(404, headers, b"")
 
 
-class StaticServer(HTTPServer):  # type: ignore
+class StaticServer(HTTPServer):  # type:ignore
     def __init__(
         self,
         host: str = "localhost",
         port: int = 8080,
+        document_root: pathlib.Path = pathlib.Path("/tmp"),
         backlog_size: int = 1,
         max_workers: int = 1,
-        timeout: tp.Optional[float] = 5,
-        request_handler_cls: tp.Type[StaticHTTPRequestHandler] = StaticHTTPRequestHandler,
-        document_root: pathlib.Path = pathlib.Path("."),
-    ) -> None:
+        timeout: tp.Optional[float] = None,
+        request_handler_cls: tp.Type[BaseRequestHandler] = StaticHTTPRequestHandler,  # type:ignore
+    ):
         super().__init__(
-            host=host,
-            port=port,
-            backlog_size=backlog_size,
-            max_workers=max_workers,
-            timeout=timeout,
-            request_handler_cls=request_handler_cls,
+            host, port, backlog_size, max_workers, timeout, request_handler_cls  # type:ignore
         )
         self.document_root = document_root
 
@@ -97,8 +105,10 @@ class StaticServer(HTTPServer):  # type: ignore
 if __name__ == "__main__":
     document_root = pathlib.Path("static") / "root"
     server = StaticServer(
-        timeout=60,
+        port=5000,
+        max_workers=5,
+        timeout=2,
         document_root=document_root,
-        request_handler_cls=StaticHTTPRequestHandler,
+        request_handler_cls=StaticHTTPRequestHandler,  # type:ignore
     )
     server.serve_forever()

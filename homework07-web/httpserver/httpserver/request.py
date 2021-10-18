@@ -1,5 +1,4 @@
 import dataclasses
-import http.client
 import typing as tp
 
 
