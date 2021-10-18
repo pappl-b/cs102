@@ -1,74 +1,147 @@
-"""Create local database using sqlalchemy."""
+import sqlite3
 import typing as tp
 
-from sqlalchemy import Column, Integer, String, create_engine
-from sqlalchemy.engine.base import Engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.orm.session import Session
-
-from scraputils import get_news
-
-Base = declarative_base()
-path_news_db = "sqlite:///news.db"
-engine = create_engine(path_news_db, connect_args={"check_same_thread": False})
-session = sessionmaker(autocommit=False, autoflush=False)
+from News import News
 
 
-class News(Base):  # type: ignore
-    """Database entity"""
-
-    __tablename__ = "news"
-    id = Column(Integer, primary_key=True)
-    title = Column(String)
-    author = Column(String)
-    url = Column(String)
-    comments = Column(Integer)
-    points = Column(Integer)
-    label = Column(String)
+class NoSuchTable(Exception):
+    pass
 
 
-@tp.no_type_check
-def get_session(engine: Engine) -> Session:
-    session.configure(bind=engine)
-    return session()
+def make_connection(file_name: str = "news.db") -> sqlite3.Connection:
+    """
+    Make connection to sqlite db
+
+    Args:
+        file_name: str with name of db file
+
+    Returns:
+        Connection: connection to sqlite db
+    """
+    return sqlite3.connect(file_name)
 
 
-def add_data(_session: Session, data: tp.List[tp.Dict[str, tp.Union[int, str]]]) -> None:
-    """Write unique rows to the database"""
-    for item in data:
-        if not list(
-            _session.query(News).filter(News.author == item["author"], News.title == item["title"])
-        ):
-            row = News(
-                title=item["title"],
-                author=item["author"],
-                url=item["url"],
-                points=item["points"],
-                comments=item["comments"],
+def get_cursor(conn: sqlite3.Connection) -> sqlite3.Cursor:
+    """
+    Returns cursor to given connection
+
+    Args:
+        conn: Connection
+
+    Returns:
+        Cursor: sqlite cursor
+    """
+    return conn.cursor()
+
+
+def execute_sql_query(conn: sqlite3.Connection, sql_query: str) -> None:
+    """
+    Executes SQL cure in connection
+
+    Args:
+        conn: Connection
+        sql_query: str with query. NORMALIZE ALL ARGS IN QUERY BEFORE EXECUTE
+    """
+    get_cursor(conn).execute(sql_query)
+    conn.commit()
+
+
+def create_table(conn: sqlite3.Connection) -> None:
+    """
+    Creates SQL Table for news if it does not exist
+
+    Args:
+        conn: Connection
+    """
+    execute_sql_query(
+        conn,
+        """CREATE TABLE IF NOT EXISTS news (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT,
+                  author TEXT, url TEXT, comments INTEGER, points INTEGER, label TEXT);""",
+    )
+
+
+def drop_table(conn: sqlite3.Connection) -> None:
+    """
+    Drops Table with news if it exists
+
+    Args:
+        conn: Connection
+    """
+    try:
+        execute_sql_query(conn, """DROP TABLE news;""")
+    except sqlite3.OperationalError:
+        pass
+
+
+def normalize_str_for_sql(s: str) -> str:
+    """
+    Normalizes str to avoid SQL Injections
+
+    Args:
+        s: str
+
+    Returns:
+        str: normalized string with replaced ' to +CHAR(39)+
+    """
+    return s.replace("'", "+CHAR(39)+")
+
+
+def change_label(conn: sqlite3.Connection, id: str, label: str) -> None:
+    """
+
+    Args:
+        conn: Connection
+        id: id of the news. Str but it can be converted to int
+        label: str
+    """
+    try:
+        execute_sql_query(
+            conn, f"""UPDATE news SET label='{normalize_str_for_sql(label)}' WHERE id={int(id)}"""
+        )
+    except sqlite3.OperationalError as e:
+        if "no such table" in str(e):
+            raise NoSuchTable("no such table")
+
+
+def get_news_from_db(conn: sqlite3.Connection) -> tp.List[News]:
+    """
+    Returns list of news in db
+
+    Args:
+        conn: Connection
+
+    Returns:
+        list[News]: List of news in db
+    """
+    return list(
+        map(lambda it: News(*it), get_cursor(conn).execute("""SELECT * FROM news;""").fetchall())
+    )
+
+
+def add_news(conn: sqlite3.Connection, news: tp.List[tp.Dict[str, tp.Any]]) -> None:
+    """
+
+    Args:
+        conn: Connection
+        news: List of news in format dict[str, Any]
+    """
+    for element in news:
+        found_news = (
+            get_cursor(conn)
+            .execute(
+                f"""SELECT id FROM news WHERE title='{normalize_str_for_sql(element['title'])}';"""
             )
-            _session.add(row)
-    _session.commit()
-
-
-@tp.no_type_check
-def set_label(session: Session, row_id: int, label: str) -> None:
-    item = session.query(News).get(row_id)
-    item.label = label
-    session.commit()
-
-
-def get_new_news(session: Session, url: str = "https://news.ycombinator.com/newest") -> None:
-    news = get_news(url)
-    news_news = []
-    for something in news:
-        main, name = something["title"], something["author"]
-        if not list(session.query(News).filter(News.title == main, News.author == name)):
-            news_news.append(something)
-    add_data(session, news_news)
-
-
-Base.metadata.create_all(bind=engine)
-
-if __name__ == "__main__":
-    add_data(get_session(engine), get_news(url="https://news.ycombinator.com/newest", n_pages=4))
+            .fetchall()
+        )
+        if found_news:
+            execute_sql_query(
+                conn,
+                f"""UPDATE news SET comments={element['comments']}, points={element['points']} WHERE id={found_news[0][0]}""",
+            )
+        else:
+            execute_sql_query(
+                conn,
+                f"""INSERT INTO news (title, author, url, comments, points) VALUES
+            ('{normalize_str_for_sql(element['title'])}', '{normalize_str_for_sql(element['author'])}',
+            '{element['url']}', {element['comments']}, {element['points']});""",
+            )
