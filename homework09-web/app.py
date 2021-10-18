@@ -1,16 +1,19 @@
 import datetime as dt
+import json
 import typing as tp
 
-from slowapi import JsonResponse, SlowAPI, Request
-from slowapi.middlewares import CORSMiddleware
-from slowapi.security import Security
+import jwt
 
-application = SlowAPI()
+from slowapi import JsonResponse, Request, SlowAPI
+from slowapi.middlewares import CORSMiddleware
+
+app = SlowAPI()
 notes: tp.Dict[int, tp.Dict[str, tp.Any]] = {}
+users: tp.Set[str] = set()
+
 JWT_SECRET = "secret"
 JWT_ALGORITHM = "HS256"
 JWT_EXP_DELTA_SECONDS = 300
-users = Security(JWT_SECRET, JWT_ALGORITHM, JWT_EXP_DELTA_SECONDS)
 
 
 def dt_json_serializer(o):
@@ -18,55 +21,62 @@ def dt_json_serializer(o):
         return o.isoformat()
 
 
-@application.post("/api/jwt-auth/")
+@app.post("/api/jwt-auth/")
 def login(request: Request) -> JsonResponse:
     user_data = request.json()
-    email = user_data["email"]
-    users.add(email)
-    return JsonResponse(data={"token": users.gen_jwt(email)})
+    users.add(user_data["email"])  # type:ignore
+    payload = {
+        "email": user_data["email"],  # type:ignore
+        "exp": dt.datetime.utcnow() + dt.timedelta(seconds=JWT_EXP_DELTA_SECONDS),
+    }
+    jwt_token = jwt.encode(payload, JWT_SECRET, JWT_ALGORITHM)
+    return JsonResponse(data={"token": jwt_token})
 
 
-@application.post("/api/notes")
-@users.protect()
+@app.post("/api/notes")
 def add_note(request: Request) -> JsonResponse:
     note = request.json()
     note_id = len(notes) + 1
-    note["id"] = note_id
-    note["pub_date"] = dt.datetime.now()
-    notes[note_id] = note
-    return JsonResponse(data=note, serializer=dt_json_serializer)
+    note["id"] = note_id  # type:ignore
+    note["pub_date"] = dt.datetime.now().isoformat()  # type:ignore
+    notes[note_id] = note  # type:ignore
+    return JsonResponse(data=note, serializer=dt_json_serializer)  # type:ignore
 
 
-@application.get("/api/notes")
+@app.get("/api/notes")
 def get_notes(request: Request) -> JsonResponse:
     notes_list = list(notes.values())
     return JsonResponse(data={"notes": notes_list}, serializer=dt_json_serializer)
 
 
-@application.get("/api/notes/{id}")
-def get_note(request: Request, id: int) -> JsonResponse:
+@app.get("/api/notes/{id}")
+def get_note(request: Request, id: str) -> JsonResponse:
     note_id = int(id)
     return JsonResponse(data=notes[note_id], serializer=dt_json_serializer)
 
 
-@application.patch("/api/notes/{id}")
-def update_note(request: Request, id: int) -> JsonResponse:
+@app.patch("/api/notes/{id}")
+def update_note(request: Request, id: str) -> JsonResponse:
     note_id = int(id)
     data = request.json()
     note = notes[note_id]
-    note["title"] = data["title"]
-    note["body"] = data["body"]
+    note["title"] = data["title"]  # type:ignore
+    note["body"] = data["body"]  # type:ignore
     return JsonResponse(data={})
 
 
-application.add_middleware(CORSMiddleware)
+app.add_middleware(CORSMiddleware)
 
 
 def main():
+    # TODO: Добавить автоматическое приведение типов аргументов
+    # TODO: Добавить авторизацию пользователей
+    # TODO: Добавить обработку завершающего слеша
+
     from wsgiserver import WSGIRequestHandler, WSGIServer
 
     server = WSGIServer(port=8080, request_handler_cls=WSGIRequestHandler)
-    server.set_app(application)
+    server.set_app(app)
     server.serve_forever()
 
 
