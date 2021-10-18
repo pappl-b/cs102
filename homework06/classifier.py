@@ -20,14 +20,14 @@ class NaiveBayesClassifier(tp.Generic[T]):
         self.words_count = 0
 
     def clear_fitted(self) -> None:
-        """ clear fitted data to fit classifier again """
+        """clear fitted data to fit classifier again"""
         self.counters = defaultdict(lambda: defaultdict(int))
         self.words_set = set()
         self.class_counter = defaultdict(int)
         self.words_count = 0
 
     def fit(self, x: tp.List[str], y: tp.List[T]) -> None:
-        """ Fit Naive Bayes classifier according to x, y. """
+        """Fit Naive Bayes classifier according to x, y."""
         for xi, yi in zip(x, y):
             self.class_counter[yi] += 1
             for word in xi.split():
@@ -36,7 +36,7 @@ class NaiveBayesClassifier(tp.Generic[T]):
                 self.words_count += 1
 
     def _predict_class(self, string: str) -> T:
-        """ classify current str to class """
+        """classify current str to class"""
         class_ind: tp.Optional[T] = None
         count_of_elements = sum(self.class_counter.values())
         best_val = float("-inf")
@@ -57,13 +57,13 @@ class NaiveBayesClassifier(tp.Generic[T]):
         return class_ind
 
     def predict(self, x: tp.Sequence[str]) -> tp.List[T]:
-        """ Perform classification on an array of test vectors x. """
+        """Perform classification on an array of test vectors x."""
         predicted: tp.List[T] = []
         for string in x:
             predicted.append(self._predict_class(string))
         return predicted
 
     def score(self, x_test: tp.List[str], y_test: tp.List[T]) -> float:
-        """ Returns the mean accuracy on the given test data and labels. """
+        """Returns the mean accuracy on the given test data and labels."""
         results = self.predict(x_test)
         return sum(y_test[it] == results[it] for it in range(len(y_test))) / len(y_test)

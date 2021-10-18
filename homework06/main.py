@@ -15,7 +15,7 @@ conn = make_connection()
 
 
 def fit_classifier() -> None:
-    """ fit classifier by data from DB """
+    """fit classifier by data from DB"""
     xy = list(filter(lambda x: not x.label is None, get_news_from_db(conn)))
     classifier.clear_fitted()
     classifier.fit(
