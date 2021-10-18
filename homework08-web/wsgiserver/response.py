@@ -3,7 +3,6 @@ import typing as tp
 
 from httpserver import HTTPResponse
 
-
 @dataclasses.dataclass
 class WSGIResponse(HTTPResponse):  # type:ignore
     status: int = 200
